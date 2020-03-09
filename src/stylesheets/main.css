@@ -12,3 +12,19 @@ body {
   padding: 0;
   width: 100%;
 }
+
+map {
+  height: 100%;
+  width: 100%;
+}
+
+.tooltip {
+   line-height: 1.5;
+   font-weight: 400;
+   font-family:"avenir next", Arial, sans-serif;
+   padding: 6px;
+   background: rgba(0, 0, 0, 0.6);
+   color: #FFA500;
+   border-radius: 1px;
+   pointer-events: none;
+ }
