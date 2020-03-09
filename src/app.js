@@ -4,23 +4,25 @@
 
 import * as d3 from 'd3';
 
-const WIDTH = window.innerWidth;
-const HEIGHT = window.innerHeight;
-const ZOOM_THRESHOLD = [0.3, 7];
-const OVERLAY_MULTIPLIER = 10;
-const OVERLAY_OFFSET = OVERLAY_MULTIPLIER / 2 - 0.5;
-const ZOOM_DURATION = 500;
-const ZOOM_IN_STEP = 2;
-const ZOOM_OUT_STEP = 1 / ZOOM_IN_STEP;
-const HOVER_COLOR = "#d36f80"
+//var promises = d3.json('./data/neighborhood_loans.geojson')
+
+//Promise.all(promises).then(ready)
+
+//function ready()
+
+const testFn = (json) => {
+
+};
 
 //https://bl.ocks.org/EveTheAnalyst/f2964f0dd889a55638d2d82e5c2fe18f
-d3.json(
-  './data/neighborhood_loans.geojson').then(
+Promise.all([
+    d3.json('./data/neighborhood_loans.geojson'),
+    d3.json('./data/neighborhood_avg_bubble_chart.json'),
+]).then(
   function(json) {
-    console.log("Am I getting here")
-    const width = 900;
-    const height = 450;
+    console.log("Am I getting here 2")
+    const width = 960;
+    const height = 500;
     const margin = {
       top: 1,
       left: 1,
@@ -28,33 +30,94 @@ d3.json(
       bottom: 1
     };
 
-   var svg = d3.select('#map').append('svg')
+  var svg = d3.select("body").append('svg')
       .attr('width', margin.left + width + margin.right)
       .attr('height', margin.top + height + margin.bottom);
 
-  //var scale = 150;
-  //var projection = d3.geoIdentity().reflectY(true).fitSize([width,height], json)
-  var projection = d3.geoIdentity().reflectY(true).fitSize([width/3,height/8], json)
-  //var center = d3.geoCentroid(json)
-  //console.log(center)
-  //var scale = 150;
-  //var projection = d3.geoMercator().scale(scale).center(center);
+
+  var projection = d3.geoIdentity().reflectY(true).fitSize([width,height], json[0])
 
   var path = d3.geoPath().projection(projection);
 
-    //var geoGenerator = d3.geoPath().projection();
-    
-    svg.selectAll('path')
-      .data(json.features)
+  var color = d3.scaleThreshold()
+    .domain([0, .25, .5, 1, 1.5, 2, 2.5])
+    .range(d3.schemeBlues[7]);
+
+  var tooltip = d3.select("body").append("div")
+        .attr("class", "tooltip")
+        .style("opacity", 0);
+//https://bl.ocks.org/adamjanes/6cf85a4fd79e122695ebde7d41fe327f
+  svg.selectAll('path')
+      .data(json[0].features)
       .enter()
       .append('path')
-      .attr('d', path)
+    .attr("fill", function(d) { return color(d.total = d.properties['loans_per_100_2017']); })
+    .attr('d', path)
+    .on("mouseover", function(d) {
+      tooltip.transition()
+      .duration(200)
+      .style("opacity", .9)
+      tooltip.html(d.properties.community)
+    })
+      .on("mouseout", function(d) {
+          tooltip.transition()
+          .duration(500)
+          .style("opacity", 0);
+      })
 
-      //.attr('d', d => geoGenerator(d))
-     /////////////////////////////////////////////
-     //////// Here we will put a lot of code concerned
-     //////// with drawing the map. This will be defined
-     //////// in the next sections.
-     /////////////////////////////////////////////
+  ////////////////////////////////////////////////////
+      // Scatter Bubble Plot
+  ////////////////////////////////////////////////////
+  // setup x
+var xValue = function(d) { return d.black_hispanic_perc;}, // data -> value
+    xScale = d3.scaleLinear().range([0, width]), // value -> display
+    xMap = function(d) { return xScale(xValue(d));}, // data -> display
+    xAxis = d3.axisBottom(xScale);
 
+// setup y
+var yValue = function(d) { return d.median_income_2017;}, // data -> value
+    yScale = d3.scaleLinear().range([height, 0]), // value -> display
+    yMap = function(d) { return yScale(yValue(d));}, // data -> display
+    yAxis = d3.axisLeft(yScale);
+
+// add the graph canvas to the body of the webpage
+var svg1 = d3.select("body").append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+    // x-axis
+  svg1.append("g")
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + height + ")")
+      .call(xAxis)
+    .append("text")
+      .attr("class", "label")
+      .attr("x", width)
+      .attr("y", -6)
+      .style("text-anchor", "end")
+      .text("Percent Population Black and Latinx");
+
+  // y-axis
+  svg1.append("g")
+      .attr("class", "y axis")
+      .call(yAxis)
+    .append("text")
+      .attr("class", "label")
+      .attr("transform", "rotate(-90)")
+      .attr("y", 6)
+      .attr("dy", ".71em")
+      .style("text-anchor", "end")
+      .text("2017 Median Income");
+
+  // draw dots
+  svg1.selectAll(".dot")
+      .data(json[1])
+    .enter().append("circle")
+      .attr("class", "dot")
+      .attr("r", 3.5)
+      .attr("cx", xMap)
+      .attr("cy", yMap)
+      .style("fill", 	"#000000")
   });
