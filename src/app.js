@@ -2,21 +2,18 @@
 // import MY_DATA from './app/data/example.json'
 // (I tend to think it's best to use screaming snake case for imported json)
 
-// Priorities:
-  // fix data
-  // add tooltip to map and plot
-  // add writing
-  // see if you can do the filter
-  // see if you can display the plot to the right of the map
+// Inspiration for code:
+  // Alena Stern's project: https://github.com/alenastern/interactive_aid_map
+// Sources (also listed in code):
+  // https://bl.ocks.org/EveTheAnalyst/f2964f0dd889a55638d2d82e5c2fe18f
+  // https://bl.ocks.org/adamjanes/6cf85a4fd79e122695ebde7d41fe327f
+  // http://bl.ocks.org/kbroman/ded6a0784706a109c3a5
+  // https://bl.ocks.org/d3noob/a22c42db65eb00d4e369
+
 
 import * as d3 from 'd3';
 import './stylesheets/main.css';
 
-//var promises = d3.json('./data/neighborhood_loans.geojson')
-
-//Promise.all(promises).then(ready)
-
-//function ready()
 
 const testFn = (json) => {
 
@@ -113,10 +110,6 @@ Promise.all([
   		var xScale = d3.scaleLinear()
   			.domain([0, 1])
   			.range([padding, width - padding * 2]);
-
-  		//var yScale = d3.scaleLinear()
-  	   //		.range([height, 0])
-       //    yMap = function(d) { return yScale(d.properties.income);}; // data -> display
 
       var y = d3.scaleLinear().range([height, 0]);
       y.domain([0, d3.max(json[0].features, function(d) {return d.properties.income;})])
