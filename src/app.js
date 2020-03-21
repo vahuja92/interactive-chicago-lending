@@ -2,7 +2,15 @@
 // import MY_DATA from './app/data/example.json'
 // (I tend to think it's best to use screaming snake case for imported json)
 
+// Priorities:
+  // fix data
+  // add tooltip to map and plot
+  // add writing
+  // see if you can do the filter
+  // see if you can display the plot to the right of the map
+
 import * as d3 from 'd3';
+import './stylesheets/main.css';
 
 //var promises = d3.json('./data/neighborhood_loans.geojson')
 
@@ -16,11 +24,12 @@ const testFn = (json) => {
 
 //https://bl.ocks.org/EveTheAnalyst/f2964f0dd889a55638d2d82e5c2fe18f
 Promise.all([
-    d3.json('./data/neighborhood_loans.geojson'),
+    d3.json('./data/neighborhood_loans_v1.geojson'),
     d3.json('./data/neighborhood_avg_bubble_chart.json'),
 ]).then(
   function(json) {
     console.log("Am I getting here 2")
+    console.log(json[0])
     const width = 960;
     const height = 500;
     const margin = {
@@ -30,7 +39,7 @@ Promise.all([
       bottom: 1
     };
 
-  var svg = d3.select("body").append('svg')
+  var svg = d3.select("#chart2").append('svg')
       .attr('width', margin.left + width + margin.right)
       .attr('height', margin.top + height + margin.bottom);
 
@@ -45,7 +54,9 @@ Promise.all([
 
   var tooltip = d3.select("body").append("div")
         .attr("class", "tooltip")
-        .style("opacity", 0);
+        .style("opacity", 0)
+
+
 //https://bl.ocks.org/adamjanes/6cf85a4fd79e122695ebde7d41fe327f
   svg.selectAll('path')
       .data(json[0].features)
@@ -53,71 +64,165 @@ Promise.all([
       .append('path')
     .attr("fill", function(d) { return color(d.total = d.properties['loans_per_100_2017']); })
     .attr('d', path)
-    .on("mouseover", function(d) {
+    .attr("class", function(d,i) { return "pt" + i; })
+    .on("mouseover", function(d, i) {
       tooltip.transition()
-      .duration(200)
-      .style("opacity", .9)
-      tooltip.html(d.properties.community)
-    })
-      .on("mouseout", function(d) {
-          tooltip.transition()
-          .duration(500)
-          .style("opacity", 0);
+          .duration(200)
+          .style("opacity", .9);
+      tooltip.html("<span style='margin-left: 2.5px;'><b>" + d.properties.community + "</b></span><br>" +
+                    "Loans in 2017: " +  d.properties.loans_2017 + "</b></span><br>" +
+                    "Loans in 2007: " + d.properties.loans_2007)
+        .style("left", (d3.event.pageX) + "px")
+        .style("top", (d3.event.pageY - 28) + "px");
+
+      // tooltip.transition()
+      // .duration(200)
+      // .style("opacity", .9)
+      // tooltip.html(d.properties.community)
+      d3.selectAll("circle.pt" + i)
+          .attr("stroke-width", 4)
+          .attr("stroke", "red");
+      d3.selectAll("path.pt" + i)
+          .attr("stroke-width", 2)
+          .attr("stroke", "red");
       })
+      .on("mouseout", function(d, i) {
+        tooltip.transition()
+                  .duration(500)
+                  .style("opacity", 0);
+        d3.selectAll("circle.pt" + i)
+        .attr("stroke-width", 0)
+        d3.selectAll("path.pt" + i)
+            .attr("stroke-width", 0);
+    })
+
+    svg.append("text")
+        .attr("x", (width / 2))
+        .attr("y", 0 - (margin.top / 2))
+        .attr("text-anchor", "middle")
+        .style("font-size", "16px")
+        .text("Loan Originations by Neighborhood");
+
+
 
   ////////////////////////////////////////////////////
       // Scatter Bubble Plot
   ////////////////////////////////////////////////////
-  // setup x
-var xValue = function(d) { return d.black_hispanic_perc;}, // data -> value
-    xScale = d3.scaleLinear().range([0, width]), // value -> display
-    xMap = function(d) { return xScale(xValue(d));}, // data -> display
-    xAxis = d3.axisBottom(xScale);
 
-// setup y
-var yValue = function(d) { return d.median_income_2017;}, // data -> value
-    yScale = d3.scaleLinear().range([height, 0]), // value -> display
-    yMap = function(d) { return yScale(yValue(d));}, // data -> display
-    yAxis = d3.axisLeft(yScale);
+  		var padding = 40;
+  		var xScale = d3.scaleLinear()
+  			.domain([0, 1])
+  			.range([padding, width - padding * 2]);
 
-// add the graph canvas to the body of the webpage
-var svg1 = d3.select("body").append("svg")
-    .attr("width", width + margin.left + margin.right)
-    .attr("height", height + margin.top + margin.bottom)
-  .append("g")
-    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+  		//var yScale = d3.scaleLinear()
+  	   //		.range([height, 0])
+       //    yMap = function(d) { return yScale(d.properties.income);}; // data -> display
 
-    // x-axis
-  svg1.append("g")
-      .attr("class", "x axis")
-      .attr("transform", "translate(0," + height + ")")
-      .call(xAxis)
-    .append("text")
-      .attr("class", "label")
-      .attr("x", width)
-      .attr("y", -6)
-      .style("text-anchor", "end")
-      .text("Percent Population Black and Latinx");
+      var y = d3.scaleLinear().range([height, 0]);
+      y.domain([0, d3.max(json[0].features, function(d) {return d.properties.income;})])
 
-  // y-axis
-  svg1.append("g")
-      .attr("class", "y axis")
-      .call(yAxis)
-    .append("text")
-      .attr("class", "label")
+  		var xAxis = d3.axisBottom().scale(xScale).ticks(5);
+
+  		var yAxis = d3.axisLeft().scale(y).ticks(5);
+
+      var r1popScale = d3.scaleLinear()
+      .domain([0, 4])
+      .range([2, 20])
+
+  		//create svg element
+  		var svg1 = d3.select("#chart1")
+  					.append("svg")
+            .attr("class", "bubble-chart")
+  					.attr("width", width)
+  					.attr("height", height);
+
+      console.log('circle:', svg1.selectAll("circle"))
+      console.log(json)
+  		svg1.selectAll("circle")
+  			.data(json[0].features)
+  			.enter()
+  			.append("circle")
+        .attr("class", function(d,i) { return "pt" + i; })
+  			.attr("cx", function(d) {
+  				return xScale(d.properties.black_hispanic_perc);
+  			})
+        .attr("cy", function(d) {
+          return y(d.properties.income);
+        })
+        .attr("r", d => r1popScale(d.properties.loans_per_100_2017))
+        .attr("fill", function(d) { return color(d.total = d.properties['loans_per_100_2017']); })
+        //http://bl.ocks.org/kbroman/ded6a0784706a109c3a5
+        .on("mouseover", function(d, i) {
+          console.log(i)
+          tooltip.transition()
+              .duration(200)
+              .style("opacity", .9);
+          tooltip.html("<span style='margin-left: 2.5px;'><b>" + d.properties.community + "</b></span><br>" +
+                        "Loans in 2017: " +  d.properties.loans_2017 + "</b></span><br>" +
+                        "Loans in 2007: " + d.properties.loans_2007)
+            .style("left", (d3.event.pageX) + "px")
+            .style("top", (d3.event.pageY - 28) + "px");
+          d3.selectAll("path.pt" + i)
+              .attr("stroke-width", 5)
+              .attr("stroke", "red");
+
+          d3.selectAll("circle.pt" + i)
+          .attr("stroke-width", 3)
+          .attr("stroke", "red");
+        })
+      .on("mouseout", function(d, i) {
+        tooltip.transition()
+                  .duration(500)
+                  .style("opacity", 0);
+          d3.selectAll("path.pt" + i)
+          .attr("stroke-width", 0)
+          d3.selectAll("circle.pt" + i)
+          .attr("stroke-width", 0)
+    })
+
+
+
+		//x axis
+		svg1.append("g")
+			.attr("class", "x axis")
+			.attr("transform", "translate(0," + (height - padding) + ")")
+			.call(xAxis)
+      ;
+
+    // text label for the y axis
+    // text label for the y axis
+    svg1.append("text")
       .attr("transform", "rotate(-90)")
-      .attr("y", 6)
-      .attr("dy", ".71em")
-      .style("text-anchor", "end")
-      .text("2017 Median Income");
+      .attr("y", 0 - 25)
+      .attr("x", 0 - (height / 2))
+      .attr("dy", "1em")
+      .style("text-anchor", "middle")
+      .style("font-size", "12px")
+      .text("Median Income of Neighborhood");
 
-  // draw dots
-  svg1.selectAll(".dot")
-      .data(json[1])
-    .enter().append("circle")
-      .attr("class", "dot")
-      .attr("r", 3.5)
-      .attr("cx", xMap)
-      .attr("cy", yMap)
-      .style("fill", 	"#000000")
-  });
+    // text label for the x axis
+    svg1.append("text")
+    .attr("transform",
+          "translate(" + (width/2) + " ," +
+                         (height+1) + ")")
+    .style("text-anchor", "middle")
+    .style("font-size", "12px")
+    .text("Percent Black and Latino");
+
+		//y axis
+		svg1.append("g")
+			.attr("class", "y axis")
+			.attr("transform", "translate(" + padding + ", 0)")
+      .style("font-size", "12px")
+			.call(yAxis);
+
+    // title
+    svg1.append("text")
+        .attr("x", (width / 2))
+        .attr("y", 0 - (margin.top / 2))
+        .attr("text-anchor", "middle")
+        .style("font-size", "20px")
+        .text("Loans by Neighborhood Median Income and Percent Residents of Color");
+
+
+   });
