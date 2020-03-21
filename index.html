@@ -7,8 +7,24 @@
   </head>
   <body>
     <h1 id="title"> Home Lending in Chicago </h1>
+    <p> For the majority of the 20th century, financial institutions denied communities of color, especially Black communities, affordable home loans through a practice called redlining. The Federal government sanctioned and supported this systematic denial of home mortgages starting in the 1930s, when it created the Home Owners Loan Corporation (HOLC) to insure private mortgages. The HOLC created maps of major American cities to document the stability and the risks associated with lending by neighborhood. </p>
+    <p> This visualization examines loan origination patterns by neighborhood in Chicago. Click on neighborhoods on the map below to see the number of loans originated there in 2007 and 2017. The darker the neighboorhood, the more loans per capita were originated there in 2017. <br />
+        Each bubble in the scatter plot is also a neighborhood, with the size of the bubble proportional to the number of loans originated per capita in the neighborhood.
+
+        The scatter plot shows that more loans are originated in neighborhoods with fewer people of color and higher median incomes.
+        Interestingly, some neighborhoods like West Town are integrated and middle income and still recieve some of the most loan originations in the city. This indicates certain neighborhoods are gentrifying.
+    <p> Sources: <br>
+      <ul>
+      <li><a href="https://www.consumerfinance.gov/data-research/hmda/historic-data/">Home Mortgage Disclosure Act Data, 2007 and 2017</a><br />
+      <li><a href="https://data.cityofchicago.org/Health-Human-Services/Per-Capita-Income/r6ad-wvtk">Income Data by Neighborhood, Chicago Data Portal</a><br />
+      <li><a href=""></a>US ACS Population Data<br />
+      </ul>
+    <a href="https://github.com/vahuja92/interactive-chicago-lending">Code</a><br />
+    <h1> Loan Originations by Neighborhood in Chicago<h1>
+      <div id= "chart1"><div/>
+      <div id="chart2"><div/>
+    </div>
     <div id="app"></div>
     <script src="bundle.js"></script>
-    <svg id="map" ></svg>
   </body>
 </html>
